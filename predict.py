@@ -47,17 +47,17 @@ class Predictor(BasePredictor):
 
         tensor = self.transform(input_image).unsqueeze(0).to(self.device)
 
-        with torch.no_grad():
-    preds = self.model(tensor)
+                with torch.no_grad():
+            preds = self.model(tensor)
 
-    # BiRefNet returns dict with 'pred'
-    if isinstance(preds, dict) and "pred" in preds:
-        pred = preds["pred"]
-    else:
-        pred = preds
+            # BiRefNet returns dict with 'pred'
+            if isinstance(preds, dict) and "pred" in preds:
+                pred = preds["pred"]
+            else:
+                pred = preds
 
-    pred = torch.sigmoid(pred)
-    pred = pred[0][0].detach().cpu().numpy()
+            pred = torch.sigmoid(pred)
+            pred = pred[0][0].detach().cpu().numpy()
 
         pred = (pred * 255).astype(np.uint8)
         mask = Image.fromarray(pred).resize(original_size, Image.LANCZOS)
