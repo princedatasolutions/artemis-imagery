@@ -5,7 +5,8 @@ build:
     - "libgl1"
     - "libglib2.0-0"
   python_packages:
-    - "transparent-background"
-    - "Pillow"
+  - "rembg[gpu]"
+  - "Pillow"
+  - "onnxruntime-gpu"
 
 predict: "predict.py:Predictor"
