@@ -48,17 +48,16 @@ class Predictor(BasePredictor):
         tensor = self.transform(input_image).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            output = self.model(tensor)
+    preds = self.model(tensor)
 
-            if isinstance(output, (list, tuple)):
-                pred = output[-1]
-            elif hasattr(output, "logits"):
-                pred = output.logits
-            else:
-                pred = output
+    # BiRefNet returns dict with 'pred'
+    if isinstance(preds, dict) and "pred" in preds:
+        pred = preds["pred"]
+    else:
+        pred = preds
 
-            pred = torch.sigmoid(pred)
-            pred = pred.squeeze().detach().cpu().numpy()
+    pred = torch.sigmoid(pred)
+    pred = pred[0][0].detach().cpu().numpy()
 
         pred = (pred * 255).astype(np.uint8)
         mask = Image.fromarray(pred).resize(original_size, Image.LANCZOS)
