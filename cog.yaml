@@ -5,14 +5,11 @@ build:
     - "libgl1"
     - "libglib2.0-0"
   python_packages:
+    - "transparent-background==1.2.9"
     - "torch"
     - "torchvision"
-    - "transformers"
-    - "accelerate"
     - "pillow"
+    - "opencv-python-headless"
     - "numpy"
-    - "einops"
-    - "kornia"
-    - "timm"
 
 predict: "predict.py:Predictor"
