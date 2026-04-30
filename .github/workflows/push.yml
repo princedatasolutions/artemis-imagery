@@ -19,6 +19,8 @@ jobs:
           cog --version
 
       - name: Push model to Replicate
-        run: cog push r8.im/princedatasolutions/artemis_imagery
+        run: |
+  echo $REPLICATE_API_TOKEN
+  cog push r8.im/princedatasolutions/artemis_imagery
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
