@@ -1,10 +1,10 @@
 from cog import BasePredictor, Input, Path
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
 
 class Predictor(BasePredictor):
     def setup(self):
-        pass
+    self.session = new_session("isnet-general-use")
 
     def predict(
         self,
@@ -13,8 +13,8 @@ class Predictor(BasePredictor):
         input_image = Image.open(image).convert("RGBA")
         output = remove(
     input_image,
-    alpha_matting=True,
-    session="isnet-general-use"
+    session=self.session,
+    alpha_matting=True
 )
 
         output_path = "/tmp/output.png"
