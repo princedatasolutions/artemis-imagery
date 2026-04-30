@@ -47,7 +47,7 @@ class Predictor(BasePredictor):
 
         tensor = self.transform(input_image).unsqueeze(0).to(self.device)
 
-                with torch.no_grad():
+        with torch.no_grad():
             preds = self.model(tensor)
 
             # BiRefNet returns dict with 'pred'
