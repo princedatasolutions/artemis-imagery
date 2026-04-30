@@ -5,8 +5,11 @@ build:
     - "libgl1"
     - "libglib2.0-0"
   python_packages:
-  - "rembg[gpu]"
-  - "Pillow"
-  - "onnxruntime-gpu"
+    - "torch"
+    - "torchvision"
+    - "transformers"
+    - "accelerate"
+    - "pillow"
+    - "numpy"
 
 predict: "predict.py:Predictor"
