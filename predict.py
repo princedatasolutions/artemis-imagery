@@ -1,40 +1,80 @@
 from cog import BasePredictor, Input, Path
-from rembg import remove, new_session
 from PIL import Image, ImageFilter
+import torch
+import numpy as np
+from transformers import AutoModelForImageSegmentation
+from torchvision import transforms
+
 
 class Predictor(BasePredictor):
     def setup(self):
-        self.session = None
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        self.model = AutoModelForImageSegmentation.from_pretrained(
+            "ZhengPeng7/BiRefNet",
+            trust_remote_code=True
+        )
+        self.model.to(self.device)
+        self.model.eval()
+
+        self.transform = transforms.Compose([
+            transforms.Resize((1024, 1024)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            ),
+        ])
 
     def predict(
         self,
         image: Path = Input(description="Input image"),
-        alpha_matting: bool = Input(description="Use alpha matting for softer edges", default=True),
-        threshold: float = Input(description="Hard alpha threshold. 0 keeps soft alpha.", default=0.0, ge=0.0, le=1.0),
-        model: str = Input(description="rembg model/session", default="isnet-general-use"),
-    ) -> Path:
-        if self.session is None:
-            self.session = new_session(model)
-
-        input_image = Image.open(image).convert("RGBA")
-
-        output = remove(
-            input_image,
-            session=self.session,
-            alpha_matting=alpha_matting
+        edge_cleanup: int = Input(
+            description="Shrink alpha edge slightly. 0 = none, 3 = light cleanup, 5 = stronger cleanup.",
+            default=0,
+            ge=0,
+            le=9
+        ),
+        feather: float = Input(
+            description="Soft feather after cleanup. 0 = none.",
+            default=0.0,
+            ge=0.0,
+            le=5.0
         )
+    ) -> Path:
+        input_image = Image.open(image).convert("RGB")
+        original_size = input_image.size
 
-        if threshold > 0:
-            alpha = output.getchannel("A")
-            alpha = alpha.point(lambda p: 255 if p / 255 >= threshold else 0)
-            output.putalpha(alpha)
+        tensor = self.transform(input_image).unsqueeze(0).to(self.device)
 
-        # Clean up soft edge/halo pixels by shrinking the alpha mask slightly
-        r, g, b, a = output.split()
-        a = a.filter(ImageFilter.MinFilter(3))
-        output = Image.merge("RGBA", (r, g, b, a))
+        with torch.no_grad():
+            output = self.model(tensor)
+
+            if isinstance(output, (list, tuple)):
+                pred = output[-1]
+            elif hasattr(output, "logits"):
+                pred = output.logits
+            else:
+                pred = output
+
+            pred = torch.sigmoid(pred)
+            pred = pred.squeeze().detach().cpu().numpy()
+
+        pred = (pred * 255).astype(np.uint8)
+        mask = Image.fromarray(pred).resize(original_size, Image.LANCZOS)
+
+        if edge_cleanup > 0:
+            if edge_cleanup % 2 == 0:
+                edge_cleanup += 1
+            mask = mask.filter(ImageFilter.MinFilter(edge_cleanup))
+
+        if feather > 0:
+            mask = mask.filter(ImageFilter.GaussianBlur(radius=feather))
+
+        output_image = input_image.convert("RGBA")
+        output_image.putalpha(mask)
 
         output_path = "/tmp/output.png"
-        output.save(output_path)
+        output_image.save(output_path)
 
         return Path(output_path)
