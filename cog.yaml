@@ -4,12 +4,15 @@ build:
   system_packages:
     - "libgl1"
     - "libglib2.0-0"
-  python_packages:
+    python_packages:
     - "torch"
     - "torchvision"
     - "transformers"
     - "accelerate"
     - "pillow"
     - "numpy"
+    - "einops"
+    - "kornia"
+    - "timm"
 
 predict: "predict.py:Predictor"
