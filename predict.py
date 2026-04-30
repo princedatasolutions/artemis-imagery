@@ -1,6 +1,6 @@
 from cog import BasePredictor, Input, Path
 from rembg import remove, new_session
-from PIL import Image
+from PIL import Image, ImageFilter
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -28,6 +28,11 @@ class Predictor(BasePredictor):
             alpha = output.getchannel("A")
             alpha = alpha.point(lambda p: 255 if p / 255 >= threshold else 0)
             output.putalpha(alpha)
+
+        # Clean up soft edge/halo pixels by shrinking the alpha mask slightly
+        r, g, b, a = output.split()
+        a = a.filter(ImageFilter.MinFilter(3))
+        output = Image.merge("RGBA", (r, g, b, a))
 
         output_path = "/tmp/output.png"
         output.save(output_path)
