@@ -11,7 +11,7 @@ class Predictor(BasePredictor):
         image: Path = Input(description="Input image")
     ) -> Path:
         input_image = Image.open(image).convert("RGBA")
-        output = remove(input_image)
+        output = remove(input_image, alpha_matting=True)
 
         output_path = "/tmp/output.png"
         output.save(output_path)
