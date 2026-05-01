@@ -1,6 +1,18 @@
 from cog import BasePredictor, Input, Path
 from PIL import Image
+import gdown
 from transparent_background import Remover
+
+
+_original_gdown_download = gdown.download
+
+
+def _gdown_download_compat(*args, **kwargs):
+    kwargs.pop("fuzzy", None)
+    return _original_gdown_download(*args, **kwargs)
+
+
+gdown.download = _gdown_download_compat
 
 
 class Predictor(BasePredictor):
