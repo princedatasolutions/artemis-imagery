@@ -1,7 +1,7 @@
 from cog import BasePredictor, Input, Path
 from PIL import Image
 import gdown
-from transparent_background.Remover import Remover
+from transparent_background import Remover
 
 
 _original_gdown_download = gdown.download
